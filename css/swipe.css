@@ -1,0 +1,51 @@
+*,
+*:before,
+*:after {
+	box-sizing: border-box;
+}
+
+.carousel {
+	position: relative;
+}
+
+.carousel-content {
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+	position: relative;
+}
+
+.carousel-content > ul {
+	margin: 0;
+	padding: 0;
+	position: absolute;
+	transition: all ease .3s;
+	visibility: hidden;
+	text-align: center;
+	overflow: hidden;
+}
+
+.carousel-content > ul > li {
+	float: left;
+	list-style: none;
+	height: 150px;
+}
+
+.carousel-content img {
+	max-width: 100%;
+	height: 100%;
+}
+
+.carousel-btn {
+	position: absolute;
+	z-index: 30;
+    display: none;
+}
+
+.carousel-prev {
+	left: 0;
+}
+
+.carousel-next {
+	right: 0;
+}
