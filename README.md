@@ -13,5 +13,4 @@ A swipe jquery plugin base on Hammer.js only for mobile
 ```javascript
 
 var swipe = $('.carousel').swipe();
-
 ```

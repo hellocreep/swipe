@@ -39,7 +39,8 @@
 		carousel: '.carousel-content > ul',
 		carouselItem: 'li',
 		carouselPrev: '.carousel-prev',
-		carouselNext: '.carousel-next'
+		carouselNext: '.carousel-next',
+		disabledNav: 'disabled'
 	}
 
 	Swipe.prototype.init = function() {
@@ -51,8 +52,7 @@
 		this.index = 0;
 		this.$carouselPrev = $el.find(opts.carouselPrev);
 		this.$carouselNext = $el.find(opts.carouselNext);
-		
-		opts.carouselLenght = $carousel.find(opts.carouselItem).length; 
+		this.carouselLength = $carousel.find(opts.carouselItem).length; 
 		
 		this._getImageWidth()
 			.done(function() {
@@ -119,12 +119,13 @@
 		var opts = this.opts,
 			$carousel = this.$carousel,
 			$firstItem = $carousel.find(opts.carouselItem).first(),
+			self = this,
 			defer;
 
 		defer = $.Deferred();
 		
 		$firstItem.find('img').on('load', function() {
-			opts.normalItemWidth = $firstItem.width();
+			self.normalItemWidth = $firstItem.width();
 			defer.resolve();
 		});
 
@@ -132,27 +133,27 @@
 	}
 
 	Swipe.prototype._setItemWidth = function() {
-		var self = this,
-			$el = this.$el,
+		var $el = this.$el,
 			opts = this.opts,
 			$carousel = this.$carousel,
 			$firstItem = $carousel.find(opts.carouselItem).first();
 
 		var itemWidth;
-		if(opts.staticCount === 1) {
-			itemWidth = $el.find(opts.carouselContent).width()
+		if(opts.staticCount == 1) {
+			itemWidth = $el.find(opts.carouselContent).width();
 			$carousel.find(opts.carouselItem).css({
 				width: itemWidth
 			});
-			opts.itemWidth = itemWidth;
+			this.currentCount = opts.staticCount;
+			this.itemWidth = itemWidth;
 		} else {
-			itemWidth = opts.normalItemWidth;
-			opts.currentCount = Math.floor($el.width() / itemWidth);
-			itemWidth = $el.width() / opts.currentCount;
+			itemWidth = this.normalItemWidth;
+			this.currentCount = Math.floor($el.width() / itemWidth);
+			itemWidth = $el.width() / this.currentCount;
 			$carousel.find(opts.carouselItem).css({
 				width: itemWidth
 			});
-			opts.itemWidth = itemWidth;
+			this.itemWidth = itemWidth;
 		}
 
 		return this;
@@ -161,11 +162,10 @@
 	Swipe.prototype._setWidth = function() {
 		var self = this,
 			$carousel = this.$carousel,
-			$el = this.$el,
-			opts = this.opts;
+			$el = this.$el;
 
 		$carousel.css({
-			width: opts.carouselLenght * opts.itemWidth
+			width: this.carouselLength * this.itemWidth
 		});
 
 		return this;
@@ -187,7 +187,7 @@
 		var $el = this.$el,
 			opts = this.opts;
 
-		if(opts.carouselLenght > opts.offsetCount || opts.showNav) {
+		if(this.carouselLength > opts.offsetCount || opts.showNav) {
 			this.$carouselPrev.css({
 				top: $el.height() / 2
 			}).show();
@@ -205,8 +205,8 @@
 
 		if(opts.staticCount !== null) {
 			opts.offsetCount = opts.staticCount;
-		} else {
-			opts.offsetCount = Math.floor($el.width() / opts.itemWidth);
+		} else if (defaultOffsetCount == opts.offsetCount) {
+			opts.offsetCount = Math.floor($el.width() / this.itemWidth);
 		}
 		return this;
 	}
@@ -216,19 +216,22 @@
 		
 		var opts = this.opts,
 			index = Math.abs(this.index),
-			carouselLenght = opts.carouselLenght,
+			carouselLength = this.carouselLength,
+			currentCount = this.currentCount,
+			disabledNav = opts.disabledNav,
+			offsetCount = opts.staticCount ? opts.staticCount : opts.offsetCount,
 			$carouselPrev = this.$carouselPrev,
 			$carouselNext = this.$carouselNext;
 
-		if(index === 0) {
-			$carouselPrev.addClass('disabled');
-			$carouselNext.removeClass('disabled');
-		} else if(index === (carouselLenght - opts.offsetCount) || index >= carouselLenght) {
-			$carouselNext.addClass('disabled');
-			$carouselPrev.removeClass('disabled');
+		if(index == 0) {
+			$carouselPrev.addClass(disabledNav);
+			$carouselNext.removeClass(disabledNav);
+		} else if((index + offsetCount + currentCount) > carouselLength) {
+			$carouselNext.addClass(disabledNav);
+			$carouselPrev.removeClass(disabledNav);
 		} else {
-			$carouselPrev.removeClass('disabled');
-			$carouselNext.removeClass('disabled');
+			$carouselPrev.removeClass(disabledNav);
+			$carouselNext.removeClass(disabledNav);
 		}
 
 		return this;
@@ -236,9 +239,10 @@
 
 	Swipe.prototype.backWards = function() {
 		var opts = this.opts,
+			disabledNav = opts.disabledNav,
 			$carouselPrev = this.$carouselPrev;
 
-		if($carouselPrev.is('.disabled')) return;
+		if($carouselPrev.hasClass(disabledNav)) return;
 
 		if(Math.abs(this.index) < opts.offsetCount) {
 			this.index += Math.abs(this.index);
@@ -250,30 +254,32 @@
 
 	Swipe.prototype.forWards = function() {
 		var opts = this.opts,
+			disabledNav = opts.disabledNav,
+			carouselLength = this.carouselLength,
+			currentCount = this.currentCount,
+			offsetCount = opts.offsetCount,
 			$carouselNext = this.$carouselNext;
 
-		if($carouselNext.is('.disabled')) return;
+		if($carouselNext.hasClass(disabledNav)) return;
 		
-		if((opts.carouselLenght - opts.offsetCount - Math.abs(this.index)) <= opts.offsetCount) {
-			if(opts.offsetCount > opts.currentCount) {
-				this.index -= opts.carouselLenght - opts.currentCount;
+		if((carouselLength - offsetCount - Math.abs(this.index)) <= offsetCount) {
+			if(offsetCount > currentCount) {
+				this.index -= carouselLength - currentCount;
 			} else {
-				this.index -= opts.carouselLenght - opts.offsetCount - Math.abs(this.index);
+				this.index -= carouselLength - offsetCount - Math.abs(this.index);
 			}
 		} else {
-			this.index -= opts.offsetCount;
+			this.index -= offsetCount;
 		}
 		this.nav(this.index).slide();
 	}
 
 	Swipe.prototype.slide = function() {
 		var $el = this.$el,
-			opts = this.opts,
 			index = this.index,
-			self = this,
 			offsetWidth;
 
-		offsetWidth = opts.itemWidth * index;
+		offsetWidth = this.itemWidth * index;
 		this.$carousel.css({
 			'transform': 'translateX('+offsetWidth+'px)'
 		});
