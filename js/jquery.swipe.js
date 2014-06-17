@@ -35,6 +35,7 @@
 		offsetCount: 2,
 		staticCount: null,
 		showNav: false,
+		autoHeight: true,
 		carouselContent: '.carousel-content',
 		carousel: '.carousel-content > ul',
 		carouselItem: 'li',
@@ -173,12 +174,13 @@
 
 	Swipe.prototype._setHeight = function() {
 		var $el = this.$el,
-			opts = this.opts,
-			$carousel = this.$carousel;
+			opts = this.opts;
 
-		$el.css({
-			height: $carousel.height()
-		});
+		if(!opts.autoHeight) {
+			$el.css({
+				height: $el.find(opts.carouselContent).height()
+			});
+		}
 
 		return this;
 	}
@@ -205,8 +207,9 @@
 
 		if(opts.staticCount !== null) {
 			opts.offsetCount = opts.staticCount;
-		} else if (defaultOffsetCount == opts.offsetCount) {
+		} else if (defaultOffsetCount == opts.offsetCount || opts.prevOffsetCount == opts.offsetCount) {
 			opts.offsetCount = Math.floor($el.width() / this.itemWidth);
+			opts.prevOffsetCount = opts.offsetCount;
 		}
 		return this;
 	}
@@ -226,7 +229,7 @@
 		if(index == 0) {
 			$carouselPrev.addClass(disabledNav);
 			$carouselNext.removeClass(disabledNav);
-		} else if((index + offsetCount + currentCount) > carouselLength) {
+		} else if((index + offsetCount) >= carouselLength) {
 			$carouselNext.addClass(disabledNav);
 			$carouselPrev.removeClass(disabledNav);
 		} else {
