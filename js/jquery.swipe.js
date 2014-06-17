@@ -119,17 +119,22 @@
 	Swipe.prototype._getImageWidth = function() {
 		var opts = this.opts,
 			$carousel = this.$carousel,
-			$firstItem = $carousel.find(opts.carouselItem).first(),
+			$firstItem = $carousel.find(opts.carouselItem + ':first'),
+			$firstImg = $firstItem.find('img'),
 			self = this,
 			defer;
 
 		defer = $.Deferred();
 		
-		$firstItem.find('img').on('load', function() {
+		if($firstItem.height()) {
 			self.normalItemWidth = $firstItem.width();
-			defer.resolve();
-		});
-
+			defer.resolve();	
+		} else {
+			$firstItem.find('img').on('load', function() {
+				self.normalItemWidth = $firstItem.width();
+				defer.resolve();
+			});
+		}
 		return defer;
 	}
 
